@@ -4,6 +4,7 @@ from dataclasses import dataclass
 from typing import List
 import sys
 import yaml
+import argparse
 
 def get_value_or_none(value):
     if value:
@@ -22,7 +23,12 @@ fieldnames = [s.strip() for s in """
 備考,dummy1,レビュアー,レビュー結果,想定されるテストケース番号,dummy2
 """.split(',')]
 # print(fieldnames)
-master_file = '200213 AS情報作成マスター - シート1.csv'
+
+parser = argparse.ArgumentParser()
+parser.add_argument('master_file', type=str, 
+                    help='マスターCSVファイル')
+args = parser.parse_args()
+master_file = args.master_file  # '200213 AS情報作成マスター - シート1.csv'
 
 # AS検証結果一覧の出力?
 with open(master_file, encoding='utf-8', newline='') as csvfile:
