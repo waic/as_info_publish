@@ -45,7 +45,13 @@ def main(src, dest, excel):
             for field in ("expected", "procedure", "actual", "judgment"):
                 name = f"{field}{i}"
                 if item.get(name):
-                    data[field] = item.get(name)
+                    value = item.get(name)
+                    if field == "judgment":
+                        if value == "○":
+                            value = "満たしている"
+                        elif value == "×":
+                            value = "満たしていない"
+                    data[field] = value
                 if name in item:
                     del item[name]
             if data:
