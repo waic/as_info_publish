@@ -4,6 +4,7 @@ import pandas as pd
 import click
 import yaml_dumpers
 
+
 @click.command()
 @click.option(
     "--src",
@@ -32,7 +33,36 @@ def main(src, dest, excel):
         df = pd.read_csv(src, encoding="utf-8-sig")
     items = df.reset_index().to_dict(orient="records", into=OrderedDict)
     for item in items:
-        del item["index"]
+        for key in list(item.keys()):
+            if key not in (
+                "id",
+                "test",
+                "date",
+                "tester",
+                "os",
+                "user_agent",
+                "assistive_tech",
+                "assistive_tech_config",
+                "expected1",
+                "procedure1",
+                "actual1",
+                "judgment1",
+                "expected2",
+                "procedure2",
+                "actual2",
+                "judgment2",
+                "expected3",
+                "procedure3",
+                "actual3",
+                "judgment3",
+                "expected4",
+                "procedure4",
+                "actual4",
+                "judgment4",
+                "comment",
+                "reviewer_comment",
+            ):
+                del item[key]
         new_item = OrderedDict()
         for key in item.keys():
             if str(item[key]) == "nan":
