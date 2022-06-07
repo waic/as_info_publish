@@ -9,8 +9,15 @@ import yaml_dumpers
 @click.option(
     "--src",
     "-s",
-    default="results_new.csv",
-    help="name of input csv (or xlsx) file",
+    default="results_master.xlsx",
+    help="name of input csv or xlsx file",
+    show_default=True,
+)
+@click.option(
+    "--sheet",
+    "-t",
+    default="results.yaml",
+    help="sheet name of input Excel file",
     show_default=True,
 )
 @click.option(
@@ -26,12 +33,15 @@ import yaml_dumpers
     is_flag=True,
     help="use read_excel rather than read_csv",
 )
-def main(src, dest, excel):
-    if excel:
-        df = pd.read_excel(src)
+def main(src, dest, excel, sheet):
+    if excel or src.endswith(".xlsx"):
+        df = pd.read_excel(src, sheet_name=sheet, index_col=[0]).dropna(how="all")
     else:
-        df = pd.read_csv(src, encoding="utf-8-sig")
-    items = df.reset_index().to_dict(orient="records", into=OrderedDict)
+        df = pd.read_csv(src, encoding="utf-8-sig", index_col=[0])
+    df.sort_index(inplace=True)
+    df.reset_index(inplace=True)
+    # df = df[df["id"] != 407]
+    items = df.to_dict(orient="records", into=OrderedDict)
     for item in items:
         for key in list(item.keys()):
             if key not in (
@@ -60,14 +70,13 @@ def main(src, dest, excel):
                 "actual4",
                 "judgment4",
                 "comment",
-                "reviewer_comment",
             ):
                 del item[key]
         new_item = OrderedDict()
         for key in item.keys():
             if str(item[key]) == "nan":
                 item[key] = None
-            if key in ("comment", "tester", "date", "reviewer_comment"):
+            if key in ("comment", "tester", "date"):
                 new_item[key] = item[key]
         contents = []
         for i in range(1, 7):
@@ -87,13 +96,14 @@ def main(src, dest, excel):
             if data:
                 contents.append(data)
         item["contents"] = contents
-        for key in ("comment", "reviewer_comment", "tester", "date"):
+        for key in ("comment", "tester", "date"):
             del item[key]
-            if key in ("tester", "reviewer_comment") and not new_item[key]:
+            if key == "tester" and not new_item[key]:
                 continue
             item[key] = new_item[key]
     yaml.add_representer(OrderedDict, yaml_dumpers.represent_odict)
     yaml.add_representer(str, yaml_dumpers.represent_str)
+    yaml.add_representer(pd._libs.tslibs.timestamps.Timestamp, yaml_dumpers.represent_timestamp)
     yaml.add_representer(type(None), yaml_dumpers.represent_none)
     with open(dest, "w") as stream:
         yaml.dump(

@@ -9,5 +9,9 @@ def represent_str(dumper, instance):
         return dumper.represent_scalar("tag:yaml.org,2002:str", instance)
 
 
+def represent_timestamp(dumper, instance):
+    return dumper.represent_scalar("tag:yaml.org,2002:str", instance.to_pydatetime().isoformat().split("T")[0].replace("-", "/"))
+
+
 def represent_none(self, _):
     return self.represent_scalar("tag:yaml.org,2002:null", "")
