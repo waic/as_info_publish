@@ -1,81 +1,78 @@
-import csv
-from pathlib import Path
-from dataclasses import dataclass
-from typing import List
-import sys
-from collections import OrderedDict
+import os
 import yaml
-import click
+import re
+from collections import OrderedDict
 import yaml_dumpers
 
 
-@click.command()
-@click.option(
-    "--srcdir",
-    "-s",
-    default="../as_test/WAIC-TEST/HTML",
-    help="directory of input md files",
-    show_default=True,
-)
-@click.option(
-    "--dest",
-    "-d",
-    default="tests.yaml",
-    help="name of output yaml file",
-    show_default=True,
-)
-def main(srcdir, dest):
-    testcases = OrderedDict()
-    for test_doc in sorted(Path(srcdir).glob("*.md")):
-        with open(test_doc, encoding="utf-8") as mdfile:
-            data = {}
-            test_id_pos = None
-            title_pos = None
-            code_pos = None
-            criteria_pos = None
-            technique_pos = None
-            for num, text in enumerate(mdfile):
-                text = text.strip()
-                # print(text)
-                data[num] = text
-                if text == "# テスト ID":
-                    test_id_pos = num + 1
-                elif text == "# テストのタイトル":
-                    title_pos = num + 1
-                elif text == "# テストコード (テストファイルへのリンク)":
-                    code_pos = num + 1
-                elif text == "# テストの対象となる達成基準 (複数)":
-                    criteria_pos = num + 1
-                elif text == "# 関連する達成方法 (複数)":
-                    technique_pos = num + 1
-        test_name = data[test_id_pos]
-        test_id = test_name.replace("WAIC-TEST-", "")
-        title = data[title_pos]
-        code = data[code_pos].split("](")[1][:-1]
-        document = (
-            f"https://github.com/waic/as_test/blob/master/WAIC-TEST/HTML/{test_name}.md"
+def extract_info_from_md(file_path):
+    with open(file_path, "r", encoding="utf-8") as file:
+        content = file.read()
+
+    # Extracting the required fields using regex
+    id_match = re.search(r"# テスト ID\s*\n\s*(.*?)\s*\n", content, re.DOTALL)
+    title_match = re.search(r"# テストのタイトル\s*\n\s*(.*?)\s*\n", content, re.DOTALL)
+    criteria_match = re.search(
+        r"# テストの対象となる達成基準 \(複数\)\s*\n\s*(.*?)\s*\n", content, re.DOTALL
+    )
+    techs_match = re.search(
+        r"# 関連する達成方法 \(複数\)\s*\n\s*(.*?)\s*\n", content, re.DOTALL
+    )
+    code_link_match = re.search(
+        r"# テストコード \(テストファイルへのリンク\)\s*\n\s*\[(.*?)\]\((.*?)\)",
+        content,
+        re.DOTALL,
+    )
+
+    if id_match and title_match and code_link_match:
+        test_id = id_match.group(1).strip().replace("WAIC-TEST-", "")
+        title = title_match.group(1).strip()
+        criteria = (
+            [c.strip() for c in criteria_match.group(1).split("\n") if c.strip()]
+            if criteria_match
+            else []
         )
-        criteria = [s.strip() for s in data[criteria_pos].split(",")]
-        techs = [
-            s.strip()
-            for s in data[technique_pos].split(",")
-            if s not in ("なし", "今のところなし")
-        ]
-        testcases[test_id] = dict(
-            title=title, code=code, document=document, criteria=criteria, techs=techs
+        techs = (
+            [t.strip() for t in techs_match.group(1).split("\n") if t.strip()]
+            if techs_match
+            else []
         )
+        code_link = code_link_match.group(2).strip()
+
+        return test_id, OrderedDict(
+            {
+                "title": title,
+                "code": code_link,
+                "document": f"https://github.com/waic/as_test/blob/master/WAIC-TEST/HTML/{os.path.basename(file_path)}",
+                "criteria": criteria,
+                "techs": techs,
+            }
+        )
+    return None, None
+
+
+def generate_tests_yaml(directory):
+    tests = OrderedDict()
+    for filename in sorted(os.listdir(directory)):
+        if filename.endswith(".md"):
+            file_path = os.path.join(directory, filename)
+            test_id, info = extract_info_from_md(file_path)
+            if test_id and info:
+                tests[test_id] = info
+
     yaml.add_representer(OrderedDict, yaml_dumpers.represent_odict)
     yaml.add_representer(str, yaml_dumpers.represent_str)
     yaml.add_representer(type(None), yaml_dumpers.represent_none)
-    with open(dest, "w") as stream:
+    with open("tests.yaml", "w", encoding="utf-8") as yaml_file:
         yaml.dump(
-            testcases,
-            stream=stream,
-            sort_keys=False,
-            default_flow_style=False,
+            tests,
+            yaml_file,
             allow_unicode=True,
+            default_flow_style=False,
+            sort_keys=False,
         )
 
 
-if __name__ == "__main__":
-    main()
+# Directory containing the markdown files
+directory = "../as_test/WAIC-TEST/HTML"
+generate_tests_yaml(directory)
