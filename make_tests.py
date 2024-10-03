@@ -1,3 +1,9 @@
+# /// script
+# requires-python = ">=3.12"
+# dependencies = [
+#     "PyYAML",
+# ]
+# ///
 import os
 import yaml
 import re
