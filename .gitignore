@@ -1,7 +1,9 @@
 venv*
 .vscode
 __pycache__
-results_new.yaml
+results*.yaml
+tests*.yaml
 *.xlsx
 .ipynb_checkpoints
 *.ipynb
+.DS_Store

@@ -1,3 +1,11 @@
+# /// script
+# requires-python = ">=3.12"
+# dependencies = [
+#     "PyYAML",
+#     "pandas",
+#     "openpyxl",
+# ]
+# ///
 import pandas as pd
 import yaml
 from collections import OrderedDict
@@ -109,12 +117,24 @@ FIELDNAMES = [
     "judgment10",
     "tester_comment",
     "waic_comment",
+    "reviewer1_comment",
+    "reviewer2_comment",
 ]
 
 
 def convert_xlsx_to_yaml(filename, output_filename):
     df = pd.read_excel(filename, dtype={"テストケース番号": str})
     df.columns = FIELDNAMES
+    df["date"] = pd.to_datetime(df["date"], errors="coerce")
+
+    missing_dates = df["date"].isna()
+    if missing_dates.any():
+        print("以下の行に欠損日時が存在するため、削除します:")
+        print(df[missing_dates])
+        df = df.dropna(subset=["date"])
+    else:
+        print("欠損日時は存在しません。")
+
     df = df.fillna("")
 
     results = []
