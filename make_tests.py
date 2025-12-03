@@ -33,16 +33,26 @@ def extract_info_from_md(file_path):
     if id_match and title_match and code_link_match:
         test_id = id_match.group(1).strip().replace("WAIC-TEST-", "")
         title = title_match.group(1).strip()
-        criteria = (
-            [c.strip() for c in criteria_match.group(1).split("\n") if c.strip()]
-            if criteria_match
-            else []
-        )
-        techs = (
-            [t.strip() for t in techs_match.group(1).split("\n") if t.strip()]
-            if techs_match
-            else []
-        )
+        # Split by newlines first, then by commas, and flatten the list
+        criteria = []
+        if criteria_match:
+            for line in criteria_match.group(1).split("\n"):
+                if line.strip():
+                    # Split by comma and add each item
+                    for item in line.split(","):
+                        item = item.strip()
+                        if item:
+                            criteria.append(item)
+        
+        techs = []
+        if techs_match:
+            for line in techs_match.group(1).split("\n"):
+                if line.strip():
+                    # Split by comma and add each item
+                    for item in line.split(","):
+                        item = item.strip()
+                        if item:
+                            techs.append(item)
         code_link = code_link_match.group(2).strip()
 
         return test_id, OrderedDict(
@@ -76,6 +86,7 @@ def generate_tests_yaml(directory):
             allow_unicode=True,
             default_flow_style=False,
             sort_keys=False,
+            indent=2,
         )
 
 

@@ -34,4 +34,4 @@ term.md
 % uv run make_tests.py
 ```
 
-一部は変換が不完全で、手作業で修正して as_info/data/tests.yaml に取り込んでいます。
+生成された `tests.yaml` を確認し、必要に応じて `as_info/data/tests.yaml` に取り込みます。
