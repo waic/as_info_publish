@@ -18,8 +18,6 @@ results_new.yaml を as_info の data/results.yaml に追記します。
 
 ## tests.yaml
 
-https://docs.astral.sh/uv/
-
 相対パスで as_test を参照して作成します。
 
 ```
@@ -35,3 +33,15 @@ term.md
 ```
 
 生成された `tests.yaml` を確認し、必要に応じて `as_info/data/tests.yaml` に取り込みます。
+
+**詳細な手順や注意事項は [AGENTS.md](AGENTS.md) を参照してください。**
+
+### 制限事項
+
+`make_tests.py` は以下のセクションが存在する Markdown ファイルのみを処理します：
+
+- `# テスト ID` - 必須
+- `# テストのタイトル` - 必須
+- `# テストコード (テストファイルへのリンク)` - 必須
+
+「# テストコード (テストファイルへのリンク)」セクションがないテストは生成されません。このようなテストがある場合は、`as_test` リポジトリの Markdown ファイルを修正する必要があります。
