@@ -10,6 +10,7 @@ import pandas as pd
 import yaml
 from collections import OrderedDict
 import argparse
+import re
 
 
 def represent_odict(dumper, instance):
@@ -24,12 +25,46 @@ def represent_str(dumper, instance):
 
 
 def represent_none(self, _):
+    # 既存データの形式（key:）に合わせるため、None を null として出力
+    # 後で文字列置換で : null を : に変換する
     return self.represent_scalar("tag:yaml.org,2002:null", "")
 
 
 yaml.add_representer(OrderedDict, represent_odict)
 yaml.add_representer(str, represent_str)
 yaml.add_representer(type(None), represent_none)
+
+
+def dump_yaml_with_empty_keys(data, stream):
+    """
+    既存データの形式（key:）に合わせて YAML を出力する
+    None 値を key: という形式（値なし）で出力する
+    """
+    # まず通常の YAML を生成
+    yaml_str = yaml.safe_dump(
+        data,
+        sort_keys=False,
+        default_flow_style=False,
+        allow_unicode=True,
+    )
+    
+    # : null を : に変換（既存データの形式に合わせる）
+    # ただし、値として "null" という文字列が含まれている場合は置換しない
+    # パターン: 行末の : null を : に変換
+    # インデントされた行で : null の後に改行または終端が来る場合のみ
+    lines = yaml_str.split('\n')
+    result_lines = []
+    
+    for line in lines:
+        # 行末の : null を : に変換
+        # ただし、文字列値として "null" が含まれている場合は除外
+        if re.match(r'^(\s+)([^:]+):\s+null\s*$', line):
+            # インデント + キー名 + : null の形式を : に変換
+            result_lines.append(re.sub(r':\s+null\s*$', ':', line))
+        else:
+            result_lines.append(line)
+    
+    stream.write('\n'.join(result_lines))
 
 # input_fieldnames = [
 #     "結果ID(仮)",
@@ -124,7 +159,31 @@ FIELDNAMES = [
 
 def convert_xlsx_to_yaml(filename, output_filename):
     df = pd.read_excel(filename, dtype={"テストケース番号": str})
-    df.columns = FIELDNAMES
+    
+    # 列数に応じて FIELDNAMES を調整
+    # results_20250205.xlsx には「視覚閲覧環境、音声閲覧環境の種別」列が追加されている
+    actual_columns = len(df.columns)
+    expected_columns = len(FIELDNAMES)
+    
+    if actual_columns == expected_columns:
+        # 既存の構造（43列）
+        df.columns = FIELDNAMES
+    elif actual_columns == expected_columns + 1:
+        # 新しい構造（44列）: 「視覚閲覧環境、音声閲覧環境の種別」が追加
+        # この列は無視して、残りの列を FIELDNAMES にマッピング
+        # 列の位置: 0-8 はそのまま、9番目が新規列、10-42 を 9-41 にマッピング
+        new_columns = FIELDNAMES[:9] + [None] + FIELDNAMES[9:]
+        df.columns = new_columns
+        # 新規列を削除（使用しない）
+        df = df.drop(columns=[None], errors='ignore')
+    else:
+        print(f"警告: 予期しない列数です。期待: {expected_columns}, 実際: {actual_columns}")
+        print(f"実際の列名: {list(df.columns)}")
+        # 可能な限りマッピングを試みる
+        min_cols = min(actual_columns, expected_columns)
+        df.columns = list(df.columns[:min_cols]) + FIELDNAMES[min_cols:]
+        df = df.iloc[:, :min_cols]
+    
     df["date"] = pd.to_datetime(df["date"], errors="coerce")
 
     missing_dates = df["date"].isna()
@@ -137,13 +196,22 @@ def convert_xlsx_to_yaml(filename, output_filename):
 
     df = df.fillna("")
 
+    # None や NaN を None のまま保持するヘルパー関数
+    # 既存データの形式（key:）に合わせるため、空文字列ではなく None を保持
+    def to_none_if_empty(value):
+        if value is None or (isinstance(value, float) and pd.isna(value)):
+            return None
+        if value == "":
+            return None
+        return value
+
     results = []
     for _, row in df.iterrows():
         contents = []
         for i in range(1, 11):
-            procedure = row[f"procedure{i}"]
-            actual = row[f"actual{i}"]
-            judgment = row[f"judgment{i}"]
+            procedure = to_none_if_empty(row[f"procedure{i}"])
+            actual = to_none_if_empty(row[f"actual{i}"])
+            judgment = to_none_if_empty(row[f"judgment{i}"])
             if any([procedure, actual, judgment]):
                 contents.append(
                     dict(procedure=procedure, actual=actual, judgment=judgment)
@@ -152,25 +220,19 @@ def convert_xlsx_to_yaml(filename, output_filename):
             dict(
                 id=row["id"],
                 test=row["test"],
-                os=row["os"],
-                user_agent=row["user_agent"],
-                assistive_tech=row["assistive_tech"],
-                assistive_tech_config=row["assistive_tech_config"],
+                os=to_none_if_empty(row["os"]),
+                user_agent=to_none_if_empty(row["user_agent"]),
+                assistive_tech=to_none_if_empty(row["assistive_tech"]),
+                assistive_tech_config=to_none_if_empty(row["assistive_tech_config"]),
                 contents=contents,
-                comment=row["tester_comment"],
-                tester=row["tester"],
+                comment=to_none_if_empty(row["tester_comment"]),
+                tester=to_none_if_empty(row["tester"]),
                 date=row["date"].strftime("%Y-%m-%d"),
             )
         )
 
     with open(output_filename, "w") as stream:
-        yaml.safe_dump(
-            results,
-            stream=stream,
-            sort_keys=False,
-            default_flow_style=False,
-            allow_unicode=True,
-        )
+        dump_yaml_with_empty_keys(results, stream)
 
 
 parser = argparse.ArgumentParser()
