@@ -19,10 +19,10 @@ def extract_info_from_md(file_path):
     id_match = re.search(r"# テスト ID\s*\n\s*(.*?)\s*\n", content, re.DOTALL)
     title_match = re.search(r"# テストのタイトル\s*\n\s*(.*?)\s*\n", content, re.DOTALL)
     criteria_match = re.search(
-        r"# テストの対象となる達成基準 \(複数\)\s*\n\s*(.*?)\s*\n", content, re.DOTALL
+        r"# テストの対象となる達成基準 \(複数\)\s*\n\s*((?:(?!^#).)*?)(?=\n#|\Z)", content, re.DOTALL | re.MULTILINE
     )
     techs_match = re.search(
-        r"# 関連する達成方法 \(複数\)\s*\n\s*(.*?)\s*\n", content, re.DOTALL
+        r"# 関連する達成方法 \(複数\)\s*\n\s*((?:(?!^#).)*?)(?=\n#|\Z)", content, re.DOTALL | re.MULTILINE
     )
     code_link_match = re.search(
         r"# テストコード \(テストファイルへのリンク\)\s*\n\s*\[(.*?)\]\((.*?)\)",
