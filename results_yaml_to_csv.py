@@ -5,7 +5,7 @@ import click
 
 @click.command()
 @click.option(
-    "--src", "-s", default="../as_info/data/results.yaml", 
+    "--src", "-s", default="../as_info/src/content/results/results.yaml", 
     help="name of input yaml file", show_default=True
 )
 @click.option(

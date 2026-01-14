@@ -31,7 +31,7 @@
 
 3. **results.yaml への追記**
    - `results_new.yaml` を確認
-   - 必要な ID 範囲を抽出して `../as_info/data/results.yaml` に追記
+   - 必要な ID 範囲を抽出して `../as_info/src/content/results/results.yaml` に追記
 
 ### 重要な注意事項
 
@@ -107,10 +107,10 @@ uv run xlsx_to_yaml.py results_yyyymmdd.xlsx --output results_new.yaml
 head -50 results_new.yaml
 
 # 既存の results.yaml を確認
-head -50 ../as_info/data/results.yaml
+head -50 ../as_info/src/content/results/results.yaml
 
 # 変更内容を確認
-git -C ../as_info diff data/results.yaml
+git -C ../as_info diff src/content/results/results.yaml
 ```
 
 ## tests.yaml への追加作業
@@ -131,7 +131,7 @@ git -C ../as_info diff data/results.yaml
 
 3. **tests.yaml への取り込み**
    - 生成された `tests.yaml` を確認
-   - 必要に応じて `../as_info/data/tests.yaml` に取り込む
+   - 必要に応じて `../as_info/src/content/tests/tests.yaml` に取り込む
 
 ### 重要な注意事項
 
@@ -176,7 +176,7 @@ git -C ../as_info diff data/results.yaml
 
 3. **データの整合性を確認する**
    - 生成された `tests.yaml` の内容を確認する
-   - 既存の `../as_info/data/tests.yaml` と形式が一致しているか確認する
+   - 既存の `../as_info/src/content/tests/tests.yaml` と形式が一致しているか確認する
    - git diff で変更内容を確認する
 
 ### トラブルシューティング
@@ -210,10 +210,10 @@ grep -c "^[0-9]" tests.yaml
 head -50 tests.yaml
 
 # 既存の tests.yaml を確認
-head -50 ../as_info/data/tests.yaml
+head -50 ../as_info/src/content/tests/tests.yaml
 
 # 変更内容を確認
-git -C ../as_info diff data/tests.yaml
+git -C ../as_info diff src/content/tests/tests.yaml
 ```
 
 ### 参考情報

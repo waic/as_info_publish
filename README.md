@@ -12,7 +12,7 @@ results_yyyymmdd.xlsx をダウンロードしてカレントディレクトリ�
 $ uv run xlsx_to_yaml.py results_yyyymmdd.xlsx --output results_new.yaml
 ```
 
-results_new.yaml を as_info の data/results.yaml に追記します。
+results_new.yaml を as_info の src/content/results/results.yaml に追記します。
 
 **詳細な手順や注意事項は [AGENTS.md](AGENTS.md) を参照してください。**
 
@@ -32,7 +32,7 @@ term.md
 % uv run make_tests.py
 ```
 
-生成された `tests.yaml` を確認し、必要に応じて `as_info/data/tests.yaml` に取り込みます。
+生成された `tests.yaml` を確認し、必要に応じて `as_info/src/content/tests/tests.yaml` に取り込みます。
 
 **詳細な手順や注意事項は [AGENTS.md](AGENTS.md) を参照してください。**
 

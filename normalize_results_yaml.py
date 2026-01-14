@@ -76,7 +76,7 @@ def normalize_results_yaml(input_path, output_path=None):
 def main():
     if len(sys.argv) < 2:
         print("使用方法: uv run normalize_results_yaml.py <入力ファイル> [出力ファイル]")
-        print("例: uv run normalize_results_yaml.py ../as_info/data/results.yaml")
+        print("例: uv run normalize_results_yaml.py ../as_info/src/content/results/results.yaml")
         sys.exit(1)
     
     input_path = sys.argv[1]
