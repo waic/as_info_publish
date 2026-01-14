@@ -6,12 +6,13 @@
 # ]
 # ///
 """
-results.yaml を正規化するスクリプト
+YAML ファイルを正規化するスクリプト（results.yaml, techs.yaml などに適用可能）
 
 以下の処理を行います:
-- 空文字列を null として扱い、コロンの右を空にする
+- 空文字列を null として扱い、コロンの右を空にする（key: null → key:）
 - バックスラッシュ付き \n を実際の改行に変換
 - 改行を含む文字列をリテラルブロック形式 (|-) に統一
+- インデント形式を統一（mapping=2, sequence=2）
 """
 
 from ruamel.yaml import YAML
@@ -20,9 +21,9 @@ import sys
 import os
 
 
-def normalize_results_yaml(input_path, output_path=None):
+def normalize_yaml(input_path, output_path=None):
     """
-    results.yaml を正規化する
+    YAML ファイルを正規化する（results.yaml, techs.yaml などに適用可能）
     
     Args:
         input_path: 入力ファイルパス
@@ -34,6 +35,7 @@ def normalize_results_yaml(input_path, output_path=None):
     yaml = YAML()
     yaml.preserve_quotes = True
     yaml.width = 4096
+    yaml.indent(mapping=2, sequence=2, offset=0)  # 一貫性のため統一: mapping=2, sequence=2
     
     def none_representer(repr, data):
         # null/空値はコロンの右を空にする
@@ -75,8 +77,9 @@ def normalize_results_yaml(input_path, output_path=None):
 
 def main():
     if len(sys.argv) < 2:
-        print("使用方法: uv run normalize_results_yaml.py <入力ファイル> [出力ファイル]")
-        print("例: uv run normalize_results_yaml.py ../as_info/src/content/results/results.yaml")
+        print("使用方法: uv run normalize_yaml.py <入力ファイル> [出力ファイル]")
+        print("例: uv run normalize_yaml.py ../as_info/src/content/results/results.yaml")
+        print("例: uv run normalize_yaml.py ../as_info/src/content/techs/techs.yaml")
         sys.exit(1)
     
     input_path = sys.argv[1]
@@ -86,7 +89,7 @@ def main():
         print(f"エラー: ファイルが見つかりません: {input_path}")
         sys.exit(1)
     
-    normalize_results_yaml(input_path, output_path)
+    normalize_yaml(input_path, output_path)
 
 
 if __name__ == '__main__':

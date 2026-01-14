@@ -38,7 +38,13 @@ term.md
 % uv run make_tests.py
 ```
 
-生成された `tests.yaml` を確認し、必要に応じて `as_info/src/content/tests/tests.yaml` に取り込みます。
+生成された `tests.yaml` を `as_info/src/content/tests/tests.yaml` に更新します：
+
+```
+% uv run update_tests_yaml.py
+```
+
+`criteria` と `techs` も `as_test` の最新の状態から更新されます。
 
 **詳細な手順や注意事項は [AGENTS.md](AGENTS.md) を参照してください。**
 

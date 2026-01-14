@@ -11,10 +11,9 @@
 - `xlsx_to_yaml.py` - Google スプレッドシートからエクスポートした xlsx ファイルを YAML 形式に変換
 - `append_results.py` - 新規データの YAML ファイルを既存の results.yaml に追加
 - `backfill_environment_type.py` - 既存の results.yaml に environment_type をバックフィル
-- `normalize_results_yaml.py` - results.yaml を正規化（複数行の値をリテラルブロック形式に統一）
-- `make_results.py` - CSV から results.yaml を生成（旧形式）
+- `normalize_yaml.py` - YAML ファイルを正規化（results.yaml, techs.yaml などに適用可能。複数行の値をリテラルブロック形式に統一、null を空スカラー形式に統一）
 - `make_tests.py` - as_test リポジトリから tests.yaml を生成
-- `results_csv_to_yaml.py` - CSV/XLSX から results.yaml を生成
+- `update_tests_yaml.py` - 生成された tests.yaml を as_info の tests.yaml に更新
 - `results_yaml_to_csv.py` - results.yaml から CSV/XLSX を生成
 
 ## results.yaml への追加作業
@@ -63,7 +62,7 @@ xlsx ファイルには2つの構造があります：
 
 #### 2. 複数行の値の正規化
 
-複数行を含む文字列は、リテラルブロック形式（`|-`）に統一されます。データ追加後は、`normalize_results_yaml.py` を実行して正規化することを推奨します。
+複数行を含む文字列は、リテラルブロック形式（`|-`）に統一されます。データ追加後は、`normalize_yaml.py` を実行して正規化することを推奨します。
 
 #### 3. 空フィールドの表記統一
 
@@ -130,7 +129,7 @@ uv run append_results.py results_new.yaml
 uv run backfill_environment_type.py ../as_info/src/content/results/results.yaml
 
 # results.yaml を正規化（複数行の値をリテラルブロック形式に統一）
-uv run normalize_results_yaml.py ../as_info/src/content/results/results.yaml
+uv run normalize_yaml.py ../as_info/src/content/results/results.yaml
 
 # 変換結果を確認
 head -50 results_new.yaml
@@ -158,9 +157,12 @@ git -C ../as_info diff src/content/results/results.yaml
    ```
    - `tests.yaml` がカレントディレクトリに生成される
 
-3. **tests.yaml への取り込み**
-   - 生成された `tests.yaml` を確認
-   - 必要に応じて `../as_info/src/content/tests/tests.yaml` に取り込む
+3. **tests.yaml への更新**
+   ```bash
+   uv run update_tests_yaml.py
+   ```
+   - 生成された `tests.yaml` を `../as_info/src/content/tests/tests.yaml` に更新します
+   - `criteria` と `techs` も `as_test` の最新の状態から更新されます
 
 ### 重要な注意事項
 
@@ -178,8 +180,10 @@ git -C ../as_info diff src/content/results/results.yaml
 
 `criteria` と `techs` フィールドは、カンマ区切りの文字列を自動的に個別のリストアイテムに展開します：
 
-- 入力: `1.1.1, 2.4.4, 2.4.9`
+- 入力: `1.1.1, 2.4.4, 2.4.9` または `1.1.1、2.4.4、2.4.9`（全角カンマも対応）
 - 出力: `- 1.1.1`, `- 2.4.4`, `- 2.4.9`
+
+「なし」「今のところなし」「無し」という文字列は空リストとして扱われます。
 
 #### 3. 生成されないテストの確認
 
@@ -231,6 +235,9 @@ git -C ../as_info diff src/content/results/results.yaml
 ```bash
 # tests.yaml を生成
 uv run make_tests.py
+
+# as_info の tests.yaml を更新
+uv run update_tests_yaml.py
 
 # 生成されたテスト数を確認
 grep -c "^[0-9]" tests.yaml
