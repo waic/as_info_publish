@@ -12,7 +12,13 @@ results_yyyymmdd.xlsx をダウンロードしてカレントディレクトリ�
 $ uv run xlsx_to_yaml.py results_yyyymmdd.xlsx --output results_new.yaml
 ```
 
-results_new.yaml を as_info の src/content/results/results.yaml に追記します。
+新規データを既存の results.yaml に追加します：
+
+```
+$ uv run append_results.py results_new.yaml
+```
+
+既存のIDは自動的にスキップされ、新規IDのみが追加されます。
 
 **詳細な手順や注意事項は [AGENTS.md](AGENTS.md) を参照してください。**
 

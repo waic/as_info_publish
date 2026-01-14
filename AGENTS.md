@@ -9,6 +9,9 @@
 ## プロジェクト構造
 
 - `xlsx_to_yaml.py` - Google スプレッドシートからエクスポートした xlsx ファイルを YAML 形式に変換
+- `append_results.py` - 新規データの YAML ファイルを既存の results.yaml に追加
+- `backfill_environment_type.py` - 既存の results.yaml に environment_type をバックフィル
+- `normalize_results_yaml.py` - results.yaml を正規化（複数行の値をリテラルブロック形式に統一）
 - `make_results.py` - CSV から results.yaml を生成（旧形式）
 - `make_tests.py` - as_test リポジトリから tests.yaml を生成
 - `results_csv_to_yaml.py` - CSV/XLSX から results.yaml を生成
@@ -30,8 +33,11 @@
    ```
 
 3. **results.yaml への追記**
-   - `results_new.yaml` を確認
-   - 必要な ID 範囲を抽出して `../as_info/src/content/results/results.yaml` に追記
+   ```bash
+   uv run append_results.py results_new.yaml
+   ```
+   - 既存のIDは自動的にスキップされ、新規IDのみが追加されます
+   - 既存の `../as_info/src/content/results/results.yaml` に上書きされます
 
 ### 重要な注意事項
 
@@ -43,9 +49,23 @@ xlsx ファイルには2つの構造があります：
 - **44列構造**（新規）: `results_20250205.xlsx` など
   - 「視覚閲覧環境、音声閲覧環境の種別」列が追加されている（9番目の列）
 
-`xlsx_to_yaml.py` は自動的に列数を検出し、適切にマッピングします。
+`xlsx_to_yaml.py` は自動的に列数を検出し、適切にマッピングします。44列構造の場合、「視覚閲覧環境、音声閲覧環境の種別」列から `environment_type` フィールドを抽出し、`comment` の前に追加します。
 
-#### 2. 空フィールドの表記統一
+#### 1-1. environment_type フィールド
+
+`environment_type` フィールドは、テスト結果が視覚閲覧環境か音声閲覧環境かを示します：
+
+- **視覚閲覧環境**: 視覚的な確認が主なテスト方法
+- **音声閲覧環境**: スクリーンリーダーなどの音声読み上げが主なテスト方法
+- **配列形式**: 両方の環境でテストが行われた場合 `['視覚閲覧環境', '音声閲覧環境']`
+
+`xlsx_to_yaml.py` は44列構造の xlsx ファイルから自動的に `environment_type` を抽出します。既存データに `environment_type` がない場合は、`backfill_environment_type.py` を使用してバックフィルできます。
+
+#### 2. 複数行の値の正規化
+
+複数行を含む文字列は、リテラルブロック形式（`|-`）に統一されます。データ追加後は、`normalize_results_yaml.py` を実行して正規化することを推奨します。
+
+#### 3. 空フィールドの表記統一
 
 **既存データの形式を維持することが重要です。**
 
@@ -54,7 +74,7 @@ xlsx ファイルには2つの構造があります：
 
 `xlsx_to_yaml.py` の `dump_yaml_with_empty_keys()` 関数が、`null` を `key:` 形式に変換します。
 
-#### 3. 既存データとの互換性
+#### 4. 既存データとの互換性
 
 - 既存の `results.yaml` の形式（`key:`）を変更しない
 - 新規データも同じ形式で出力する
@@ -102,6 +122,15 @@ xlsx ファイルには2つの構造があります：
 ```bash
 # xlsx を YAML に変換
 uv run xlsx_to_yaml.py results_yyyymmdd.xlsx --output results_new.yaml
+
+# 新規データを既存の results.yaml に追加
+uv run append_results.py results_new.yaml
+
+# 既存データに environment_type をバックフィル（必要に応じて）
+uv run backfill_environment_type.py ../as_info/src/content/results/results.yaml
+
+# results.yaml を正規化（複数行の値をリテラルブロック形式に統一）
+uv run normalize_results_yaml.py ../as_info/src/content/results/results.yaml
 
 # 変換結果を確認
 head -50 results_new.yaml

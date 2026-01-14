@@ -170,12 +170,16 @@ def convert_xlsx_to_yaml(filename, output_filename):
         df.columns = FIELDNAMES
     elif actual_columns == expected_columns + 1:
         # 新しい構造（44列）: 「視覚閲覧環境、音声閲覧環境の種別」が追加
-        # この列は無視して、残りの列を FIELDNAMES にマッピング
-        # 列の位置: 0-8 はそのまま、9番目が新規列、10-42 を 9-41 にマッピング
+        # 列の位置: 0-8 はそのまま、9番目が新規列（環境タイプ）、10-42 を 9-41 にマッピング
+        # 元の列名を保持して、後で environment_type として参照
+        original_cols = list(df.columns)
+        # 9番目の列（インデックス9）を environment_type として保持
+        environment_type_col = original_cols[9]
+        # 列名をマッピング
         new_columns = FIELDNAMES[:9] + [None] + FIELDNAMES[9:]
         df.columns = new_columns
-        # 新規列を削除（使用しない）
-        df = df.drop(columns=[None], errors='ignore')
+        # environment_type 列を保持（元の列名で）
+        df.rename(columns={None: environment_type_col}, inplace=True)
     else:
         print(f"警告: 予期しない列数です。期待: {expected_columns}, 実際: {actual_columns}")
         print(f"実際の列名: {list(df.columns)}")
@@ -216,20 +220,39 @@ def convert_xlsx_to_yaml(filename, output_filename):
                 contents.append(
                     dict(procedure=procedure, actual=actual, judgment=judgment)
                 )
-        results.append(
-            dict(
-                id=row["id"],
-                test=row["test"],
-                os=to_none_if_empty(row["os"]),
-                user_agent=to_none_if_empty(row["user_agent"]),
-                assistive_tech=to_none_if_empty(row["assistive_tech"]),
-                assistive_tech_config=to_none_if_empty(row["assistive_tech_config"]),
-                contents=contents,
-                comment=to_none_if_empty(row["tester_comment"]),
-                tester=to_none_if_empty(row["tester"]),
-                date=row["date"].strftime("%Y-%m-%d"),
-            )
+        # environment_type を取得（44列構造の場合）
+        environment_type = None
+        # 「視覚閲覧環境、音声閲覧環境の種別」列を探す
+        env_col = None
+        for col in df.columns:
+            if '視覚閲覧環境' in str(col) and '音声閲覧環境' in str(col):
+                env_col = col
+                break
+        
+        if env_col and env_col in row:
+            env_val = to_none_if_empty(row[env_col])
+            if env_val:
+                environment_type = env_val
+        
+        result_dict = dict(
+            id=row["id"],
+            test=row["test"],
+            os=to_none_if_empty(row["os"]),
+            user_agent=to_none_if_empty(row["user_agent"]),
+            assistive_tech=to_none_if_empty(row["assistive_tech"]),
+            assistive_tech_config=to_none_if_empty(row["assistive_tech_config"]),
+            contents=contents,
         )
+        
+        # environment_type を comment の前に追加
+        if environment_type is not None:
+            result_dict["environment_type"] = environment_type
+        
+        result_dict["comment"] = to_none_if_empty(row["tester_comment"])
+        result_dict["tester"] = to_none_if_empty(row["tester"])
+        result_dict["date"] = row["date"].strftime("%Y-%m-%d")
+        
+        results.append(result_dict)
 
     with open(output_filename, "w") as stream:
         dump_yaml_with_empty_keys(results, stream)
