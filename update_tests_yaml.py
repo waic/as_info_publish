@@ -34,7 +34,7 @@ def update_tests_yaml(new_tests_file='tests.yaml', existing_tests_path=None):
     yaml_ruamel = YAML()
     yaml_ruamel.preserve_quotes = True
     yaml_ruamel.width = 4096
-    yaml_ruamel.indent(mapping=2, sequence=2, offset=0)  # 一貫性のため results.yaml と同じ2スペースに統一
+    yaml_ruamel.indent(mapping=2, sequence=2, offset=0)  # criteria/techs は2スペース（既存形式）
     yaml_ruamel.default_flow_style = False
     yaml_ruamel.allow_unicode = True
     

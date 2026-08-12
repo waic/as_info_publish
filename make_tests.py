@@ -18,13 +18,13 @@ def extract_info_from_md(file_path):
     id_match = re.search(r"# テスト ID\s*\n\s*(.*?)\s*\n", content, re.DOTALL)
     title_match = re.search(r"# テストのタイトル\s*\n\s*(.*?)\s*\n", content, re.DOTALL)
     criteria_match = re.search(
-        r"# テストの対象となる達成基準 \(複数\)\s*\n\s*((?:(?!^#).)*?)(?=\n#|\Z)", content, re.DOTALL | re.MULTILINE
+        r"# テストの対象となる達成基準(?:\s*\(複数\))?\s*\n\s*((?:(?!^#).)*?)(?=\n#|\Z)", content, re.DOTALL | re.MULTILINE
     )
     techs_match = re.search(
-        r"# 関連する達成方法 \(複数\)\s*\n\s*((?:(?!^#).)*?)(?=\n#|\Z)", content, re.DOTALL | re.MULTILINE
+        r"# 関連する達成方法(?:\s*\(複数\))?\s*\n\s*((?:(?!^#).)*?)(?=\n#|\Z)", content, re.DOTALL | re.MULTILINE
     )
     code_link_match = re.search(
-        r"# テストコード \(テストファイルへのリンク\)\s*\n\s*\[(.*?)\]\((.*?)\)",
+        r"# テストコード \(テストファイルへのリンク\)\s*\n\s*((?:\[.*?\]\(.*?\)(?:\s*,\s*)?)+)",
         content,
         re.DOTALL,
     )
@@ -58,13 +58,18 @@ def extract_info_from_md(file_path):
                         # Skip empty items and "なし" variants
                         if item and item not in ("なし", "今のところなし", "無し"):
                             techs.append(item)
-        code_link = code_link_match.group(2).strip()
+        # テストコードのリンクをすべて抽出（複数リンクは配列にする）
+        code_links = re.findall(r"\[.*?\]\((.*?)\)", code_link_match.group(1))
+        code_link = code_links[0] if len(code_links) == 1 else code_links
+
+        # document は既存の as_info の形式（waic.github.io の .html）に合わせる
+        doc_basename = os.path.basename(file_path).replace(".md", ".html")
 
         return test_id, OrderedDict(
             {
                 "title": title,
                 "code": code_link,
-                "document": f"https://github.com/waic/as_test/blob/master/WAIC-TEST/HTML/{os.path.basename(file_path)}",
+                "document": f"https://waic.github.io/as_test/WAIC-TEST/HTML/{doc_basename}",
                 "criteria": criteria,
                 "techs": techs,
             }
