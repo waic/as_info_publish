@@ -1,3 +1,12 @@
+#!/usr/bin/env python3
+# /// script
+# requires-python = ">=3.12"
+# dependencies = [
+#     "PyYAML",
+#     "pandas",
+#     "click",
+# ]
+# ///
 import yaml
 import pandas as pd
 import click
