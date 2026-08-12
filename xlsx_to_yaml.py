@@ -254,7 +254,7 @@ def convert_xlsx_to_yaml(filename, output_filename):
         
         results.append(result_dict)
 
-    with open(output_filename, "w") as stream:
+    with open(output_filename, "w", encoding="utf-8") as stream:
         dump_yaml_with_empty_keys(results, stream)
 
 
