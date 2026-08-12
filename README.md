@@ -46,14 +46,12 @@ uv run <スクリプト名>.py ...
 # xlsx → YAML 変換
 uv run xlsx_to_yaml.py results_yyyymmdd.xlsx --output results_new.yaml
 
-# 新規データを既存 results.yaml に追加
+# 新規データを as_info の分割ファイルへ直接追加
 uv run append_results.py results_new.yaml
-
-# as_info の分割ファイルへ反映（必須）
-cd ../as_info
-npx tsx scripts/split-results.ts
-cd ../as_info_publish
 ```
+
+`append_results.py` は新規データを **as_info の ID ごとの分割ファイル**
+（`src/content/results/{NNNN}/{NNNN}.yaml`）に直接追加します。
 
 ### tests.yaml の更新
 
@@ -68,8 +66,7 @@ uv run update_tests_yaml.py
 ## ツール一覧
 
 - `xlsx_to_yaml.py` - Google スプレッドシートからエクスポートした xlsx ファイルを YAML 形式に変換
-- `append_results.py` - 新規データの YAML ファイルを既存の results.yaml に追加
-- `backfill_environment_type.py` - 既存の results.yaml に environment_type をバックフィル
+- `append_results.py` - 新規データを as_info の分割ファイル（IDごと）に直接追加
 - `normalize_yaml.py` - YAML ファイルを正規化（results.yaml, techs.yaml などに適用可能）
 - `make_tests.py` - as_test リポジトリから tests.yaml を生成
 - `update_tests_yaml.py` - 生成された tests.yaml を as_info の tests.yaml に更新
@@ -78,5 +75,5 @@ uv run update_tests_yaml.py
 
 ## 注意
 
-- as_info の results データは**IDごとの分割ファイル**（`src/content/results/{NNNN}/{NNNN}.yaml`）で管理しています。`append_results.py` は単一 `results.yaml` を出力するため、追記後に `split-results.ts` で分割する必要があります。
+- as_info の results データは**IDごとの分割ファイル**（`src/content/results/{NNNN}/{NNNN}.yaml`）で管理しています。`append_results.py` は新規データをこの分割ファイルに直接追加します。
 - 詳細な手順・注意事項・トラブルシューティングは [update_guide.md](update_guide.md) を参照してください。
