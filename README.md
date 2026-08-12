@@ -40,6 +40,8 @@ uv run <スクリプト名>.py ...
 
 具体的な操作手順は、[update_guide.md](update_guide.md) を参照してください。
 
+> **サンプルデータ**: `examples/` ディレクトリに匿名化済みのサンプル xlsx（`results_20260812.xlsx`）を置いています。ハンズオンや動作確認に利用できます。
+
 ### results.yaml の更新
 
 ```bash
@@ -76,4 +78,5 @@ uv run update_tests_yaml.py
 ## 注意
 
 - as_info の results データは**IDごとの分割ファイル**（`src/content/results/{NNNN}/{NNNN}.yaml`）で管理しています。`append_results.py` は新規データをこの分割ファイルに直接追加します。
+- `append_results.py` はデフォルトで `../as_info/src/content/results` を参照するため、`as_info` リポジトリが `as_info_publish` と同じ親ディレクトリ配下にある前提です。別の場所にある場合は第2引数で results ディレクトリを指定します（例: `uv run append_results.py results_new.yaml /path/to/as_info/src/content/results`）。
 - 詳細な手順・注意事項・トラブルシューティングは [update_guide.md](update_guide.md) を参照してください。
