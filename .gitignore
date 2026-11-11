@@ -1,6 +1,7 @@
 venv*
 .vscode
 __pycache__
+results*.xlsx
 results*.yaml
 tests*.yaml
 .ipynb_checkpoints

@@ -185,6 +185,8 @@ uv run xlsx_to_yaml.py results_20260812.xlsx --output results_new.yaml
 
 - 列数（43列/44列）を自動検出します。
 - 44列の場合、「視覚閲覧環境、音声閲覧環境の種別」列から `environment_type` を抽出します。
+- テストケース番号は `0001-01` 形式に正規化します（`WAIC-TEST-` / `WAIC-CODE-` の接頭辞は落とします）。
+- セルに混ざった書式制御文字（U+200E など）と末尾の空白・改行は落とします。
 - 出力を確認:
 
 ```bash
@@ -387,6 +389,9 @@ npm run preview
 - **`uv: command not found`**: uv をインストールします（`brew install uv` など）。
 - **空フィールドが `null` と出力される**: `xlsx_to_yaml.py` / `append_results.py` の `key:` 変換処理を確認します。
 - **列数が合わないエラー**: xlsx の列数を確認します（44列想定。それ以外は警告）。
+- **`environment_type` が YAML に出てこない**: 44列構造で環境種別列を検出できていません。`xlsx_to_yaml.py` の列マッピングを確認します。
+- **YAML に不可視文字（U+200E など）が入る**: Windows の設定画面からコピーしたセルに書式制御文字が混ざっています。`xlsx_to_yaml.py` / `append_results.py` は `yaml_dumpers.remove_invisible()` で落とすため、変換し直せば消えます。
+- **テストケース番号が `WAIC-TEST-0001-01` のようになる**: `xlsx_to_yaml.py` が接頭辞を落として `0001-01` に正規化します。
 - **append_results でディレクトリが見つからない**: 引数に as_info の `src/content/results` ディレクトリを正しく指定しているか確認します。
 - **期待したテストが生成されない**: `as_test` の Markdown に必須セクション（テストコードへのリンク）があるか確認します。
 - **node コマンドで `npx: command not found`**: `npm install` を実行します。
