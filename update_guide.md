@@ -238,6 +238,7 @@ uv run make_tests.py
 ```
 
 カレントディレクトリに `tests.yaml` が生成されます。
+`as_test` の「関連する要素や属性」（`input[type="text"]` のようなセレクタ形式の箇条書き）は、各テストの `selectors` として出力されます（「なし」のテストには出力されません）。
 
 ```bash
 # 生成件数を確認（期待値と一致するか）
@@ -256,7 +257,8 @@ uv run update_tests_yaml.py tests.yaml
 ```
 
 - `../as_info/src/content/tests/tests.yaml` を更新します。
-- `criteria` と `techs` も `as_test` の最新状態から更新されます。
+- 各テストの `criteria` と `techs`（達成基準・達成方法の ID）は `as_test` の最新状態に更新されますが、`criteria.yaml` と `techs.yaml` 自体は更新されません。
+- 新しいテストが `techs.yaml` や `criteria.yaml` にない ID を参照している場合は、[4. criteria / techs / metadata の更新](#4-criteria--techs--metadata-の更新必要に応じて) で手動で追加します（未追加のままだと as_info のビルドや `checkdata.py` が失敗します）。
 
 ### 3-4. 差分の確認
 
@@ -268,7 +270,7 @@ git -C ../as_info diff src/content/tests/tests.yaml
 
 ## 4. criteria / techs / metadata の更新（必要に応じて）
 
-WCAG 達成基準や達成方法（テクニック集）、サイトのメタデータを更新する場合:
+WCAG 達成基準や達成方法（テクニック集）、サイトのメタデータを更新する場合は、下記のファイルを手動で編集し（生成するコマンドはありません）、並べ替えスクリプトを実行します。
 
 ```bash
 cd ../as_info

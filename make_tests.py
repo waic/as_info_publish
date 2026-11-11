@@ -23,6 +23,9 @@ def extract_info_from_md(file_path):
     techs_match = re.search(
         r"# 関連する達成方法(?:\s*\(複数\))?\s*\n\s*((?:(?!^#).)*?)(?=\n#|\Z)", content, re.DOTALL | re.MULTILINE
     )
+    selectors_match = re.search(
+        r"^# 関連する要素や属性[ \t]*\r?\n(.*?)(?=^# |\Z)", content, re.DOTALL | re.MULTILINE
+    )
     code_link_match = re.search(
         r"# テストコード \(テストファイルへのリンク\)\s*\n\s*((?:\[.*?\]\(.*?\)(?:\s*,\s*)?)+)",
         content,
@@ -58,6 +61,14 @@ def extract_info_from_md(file_path):
                         # Skip empty items and "なし" variants
                         if item and item not in ("なし", "今のところなし", "無し"):
                             techs.append(item)
+        # 関連する要素や属性（セレクタ形式の箇条書き。「なし」は除く）
+        selectors = []
+        if selectors_match:
+            selectors = [
+                item
+                for item in re.findall(r"^- (.+?)\s*$", selectors_match.group(1), re.MULTILINE)
+                if item != "なし"
+            ]
         # テストコードのリンクをすべて抽出（複数リンクは配列にする）
         code_links = re.findall(r"\[.*?\]\((.*?)\)", code_link_match.group(1))
         code_link = code_links[0] if len(code_links) == 1 else code_links
@@ -65,7 +76,7 @@ def extract_info_from_md(file_path):
         # document は既存の as_info の形式（waic.github.io の .html）に合わせる
         doc_basename = os.path.basename(file_path).replace(".md", ".html")
 
-        return test_id, OrderedDict(
+        info = OrderedDict(
             {
                 "title": title,
                 "code": code_link,
@@ -74,6 +85,9 @@ def extract_info_from_md(file_path):
                 "techs": techs,
             }
         )
+        if selectors:
+            info["selectors"] = selectors
+        return test_id, info
     return None, None
 
 
