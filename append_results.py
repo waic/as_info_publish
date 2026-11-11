@@ -163,7 +163,8 @@ def append_results(new_data_file, results_dir=None):
         os.makedirs(folder_path, exist_ok=True)
         file_path = os.path.join(folder_path, f"{id_num:04d}.yaml")
         content = dump_single_entry(entry)
-        with open(file_path, 'w', encoding='utf-8') as f:
+        # 既存ファイルは LF。Windows のテキストモードで CRLF にならないよう newline を固定する
+        with open(file_path, 'w', encoding='utf-8', newline='\n') as f:
             f.write(content)
         written.append(file_path)
 
