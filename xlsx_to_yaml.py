@@ -12,6 +12,27 @@ from collections import OrderedDict
 import argparse
 import re
 
+from yaml_dumpers import remove_invisible
+
+
+TEST_ID_PREFIXES = ("WAIC-TEST-", "WAIC-CODE-")
+
+
+def normalize_test_id(value):
+    """テストケース番号を tests.yaml のキー形式（例: 0001-01）に揃える。
+
+    入力フォームではテストページやテストコードの URL 名
+    （WAIC-TEST-0001-01、WAIC-CODE-0002-01）で回答されることがあるため、
+    接頭辞を落としてテストケース番号にする。
+    """
+    text = "" if value is None else str(value)
+    text = remove_invisible(text).strip()
+    for prefix in TEST_ID_PREFIXES:
+        if text.startswith(prefix):
+            text = text[len(prefix):]
+            break
+    return text.strip()
+
 
 def represent_odict(dumper, instance):
     return dumper.represent_mapping("tag:yaml.org,2002:map", instance.items())
@@ -174,12 +195,14 @@ def convert_xlsx_to_yaml(filename, output_filename):
         # 元の列名を保持して、後で environment_type として参照
         original_cols = list(df.columns)
         # 9番目の列（インデックス9）を environment_type として保持
+        # None を列名に入れると pandas が NaN に変換して rename で戻せないため、
+        # 元の列名をそのまま使う
         environment_type_col = original_cols[9]
         # 列名をマッピング
-        new_columns = FIELDNAMES[:9] + [None] + FIELDNAMES[9:]
+        new_columns = (
+            FIELDNAMES[:9] + [environment_type_col] + FIELDNAMES[9:]
+        )
         df.columns = new_columns
-        # environment_type 列を保持（元の列名で）
-        df.rename(columns={None: environment_type_col}, inplace=True)
     else:
         print(f"警告: 予期しない列数です。期待: {expected_columns}, 実際: {actual_columns}")
         print(f"実際の列名: {list(df.columns)}")
@@ -207,7 +230,13 @@ def convert_xlsx_to_yaml(filename, output_filename):
             return None
         if value == "":
             return None
-        return value
+        # 日付・数値として解釈されたセルは、公開データの型（文字列）に揃える
+        if not isinstance(value, str):
+            if hasattr(value, "strftime"):
+                return value.strftime("%Y-%m-%d")
+            value = str(value)
+        # コピー＆ペースト由来の不可視文字を落とし、末尾の改行・空白も落とす
+        return remove_invisible(value).rstrip()
 
     results = []
     for _, row in df.iterrows():
@@ -236,7 +265,7 @@ def convert_xlsx_to_yaml(filename, output_filename):
         
         result_dict = dict(
             id=row["id"],
-            test=row["test"],
+            test=normalize_test_id(row["test"]),
             os=to_none_if_empty(row["os"]),
             user_agent=to_none_if_empty(row["user_agent"]),
             assistive_tech=to_none_if_empty(row["assistive_tech"]),

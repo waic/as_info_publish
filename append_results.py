@@ -24,11 +24,19 @@ import yaml
 import sys
 import os
 import re
-from yaml_dumpers import represent_str, represent_none
+from yaml_dumpers import remove_invisible, represent_str, represent_none
+
+
+class IndentDumper(yaml.SafeDumper):
+    """シーケンスを既存ファイルと同じ 2 スペース字下げで出力する Dumper。"""
+
+    def increase_indent(self, flow=False, indentless=False):
+        return super().increase_indent(flow, False)
+
 
 # safe_dump で改行あり文字列をリテラルブロック（|）で、空値を key: で出力する
-yaml.SafeDumper.add_representer(str, represent_str)
-yaml.SafeDumper.add_representer(type(None), represent_none)
+IndentDumper.add_representer(str, represent_str)
+IndentDumper.add_representer(type(None), represent_none)
 
 
 def folder_for(id_num):
@@ -52,7 +60,7 @@ def normalize_value(obj):
         if obj == '':
             return None
         s = obj.replace('\\n', '\n') if '\\n' in obj else obj
-        return s
+        return remove_invisible(s)
     return obj
 
 
@@ -64,12 +72,14 @@ def dump_single_entry(entry):
       - 配列の先頭 `-` プレフィックスを付けない（単一オブジェクト）
       - 空フィールドは `key:` 形式（値なし）
       - 改行を含む文字列はリテラルブロック（|）形式
+      - シーケンスは 2 スペース字下げ（`  - procedure:`）
     """
     # 正規化を適用（空文字→None、\n→実改行）
     entry = normalize_value(entry)
 
-    yaml_str = yaml.safe_dump(
+    yaml_str = yaml.dump(
         entry,
+        Dumper=IndentDumper,
         sort_keys=False,
         default_flow_style=False,
         allow_unicode=True,
@@ -153,7 +163,8 @@ def append_results(new_data_file, results_dir=None):
         os.makedirs(folder_path, exist_ok=True)
         file_path = os.path.join(folder_path, f"{id_num:04d}.yaml")
         content = dump_single_entry(entry)
-        with open(file_path, 'w', encoding='utf-8') as f:
+        # 既存ファイルは LF。Windows のテキストモードで CRLF にならないよう newline を固定する
+        with open(file_path, 'w', encoding='utf-8', newline='\n') as f:
             f.write(content)
         written.append(file_path)
 

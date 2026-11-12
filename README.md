@@ -65,10 +65,28 @@ uv run make_tests.py
 uv run update_tests_yaml.py
 ```
 
+### 既存データのクレンジング
+
+過去に取り込んだ結果データの表記の揺れをまとめて直す場合に使います。
+
+```bash
+# 対象の確認（書き換えない）
+uv run clean_results.py
+
+# 変更内容の表示
+uv run clean_results.py --dry-run
+
+# 実際に書き換える
+uv run clean_results.py --write
+```
+
+処理内容は、テストケース番号の正規化（`WAIC-TEST-0001-01` → `0001-01`）、不可視文字（U+200E など）の除去、空文字列の空値化、単一行の値の末尾空白の除去です。複数行の値は末尾空白を触りません。`tests.yaml` に存在しないテストケース番号は変更せず警告として報告します。
+
 ## ツール一覧
 
 - `xlsx_to_yaml.py` - Google スプレッドシートからエクスポートした xlsx ファイルを YAML 形式に変換
 - `append_results.py` - 新規データを as_info の分割ファイル（IDごと）に直接追加
+- `clean_results.py` - 既存の分割ファイルをクレンジング（テストケース番号の正規化・不可視文字の除去など）
 - `normalize_yaml.py` - YAML ファイルを正規化（results.yaml, techs.yaml などに適用可能）
 - `make_tests.py` - as_test リポジトリから tests.yaml を生成
 - `update_tests_yaml.py` - 生成された tests.yaml を as_info の tests.yaml に更新
